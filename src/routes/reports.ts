@@ -26,6 +26,10 @@ function isReport(value: unknown): value is Report {
 }
 
 export async function reportsRoutes(server: FastifyInstance) {
+  server.get('/api/reports', async (_request, reply) => {
+    return reply.send({ reports: await listReports() });
+  });
+
   server.get('/reports', async (_request, reply) => {
     const reports = await listReports();
     const rows = reports
