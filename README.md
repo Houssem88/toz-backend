@@ -25,3 +25,6 @@ security mechanism.
 ```bash
 npm start
 ```
+
+For Render, use `npm install && npm run build` as the build command and
+`npm start` as the start command.
