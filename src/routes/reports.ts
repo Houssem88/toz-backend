@@ -25,9 +25,62 @@ function isReport(value: unknown): value is Report {
   );
 }
 
+type ReportGroup = {
+  id: number;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  reportedAt: string;
+  reportCount: number;
+};
+
+function distanceInMeters(first: Report, second: Report): number {
+  const earthRadius = 6_371_000;
+  const latitudeDelta = (second.latitude - first.latitude) * Math.PI / 180;
+  const longitudeDelta = (second.longitude - first.longitude) * Math.PI / 180;
+  const firstLatitude = first.latitude * Math.PI / 180;
+  const secondLatitude = second.latitude * Math.PI / 180;
+  const haversine = Math.sin(latitudeDelta / 2) ** 2 +
+      Math.cos(firstLatitude) *
+          Math.cos(secondLatitude) *
+          Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+}
+
+function groupReports(reports: Array<Report & { id: number }>): ReportGroup[] {
+  const groups: ReportGroup[] = [];
+
+  for (const report of reports) {
+    const matchingGroup = report.accuracy <= 15
+        ? groups.find(
+            (group) =>
+                group.accuracy <= 15 &&
+                distanceInMeters(report, group) <= 10,
+          )
+        : undefined;
+
+    if (!matchingGroup) {
+      groups.push({
+        id: report.id,
+        latitude: report.latitude,
+        longitude: report.longitude,
+        accuracy: report.accuracy,
+        reportedAt: report.reportedAt,
+        reportCount: 1,
+      });
+      continue;
+    }
+
+    matchingGroup.reportCount += 1;
+  }
+
+  return groups;
+}
+
 export async function reportsRoutes(server: FastifyInstance) {
   server.get('/api/reports', async (_request, reply) => {
-    return reply.send({ reports: await listReports() });
+    const reports = await listReports();
+    return reply.send({ reports: groupReports(reports) });
   });
 
   server.get('/reports', async (_request, reply) => {
