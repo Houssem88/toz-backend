@@ -1,9 +1,17 @@
 import Fastify from 'fastify';
+import { initializeDatabase } from './database.js';
 import { reportsRoutes } from './routes/reports.js';
 
 const server = Fastify({
-  logger: true,
+  logger: {
+    base: {
+      hostname: 'Houssem',
+    },
+  },
 });
+
+const port = Number(process.env.PORT ?? 3000);
+const host = process.env.HOST ?? '127.0.0.1';
 
 server.get('/', async () => {
   return {
@@ -16,9 +24,10 @@ server.register(reportsRoutes);
 
 const start = async () => {
   try {
+    await initializeDatabase();
     await server.listen({
-      port: 3000,
-      host: '127.0.0.1',
+      port,
+      host,
     });
   } catch (error) {
     server.log.error(error);
