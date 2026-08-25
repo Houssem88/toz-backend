@@ -27,7 +27,7 @@ function isReport(value: unknown): value is Report {
 
 export async function reportsRoutes(server: FastifyInstance) {
   server.get('/reports', async (_request, reply) => {
-    const reports = listReports();
+    const reports = await listReports();
     const rows = reports
       .map(
         (report) => `
@@ -78,8 +78,8 @@ export async function reportsRoutes(server: FastifyInstance) {
       });
     }
 
-    const reportId = insertReport(request.body);
-    server.log.info({ reportId, report: request.body });
+    const reportId = await insertReport(request.body);
+    server.log.info({ reportId }, 'Report saved');
 
     return reply.code(201).send({
       message: 'Report received',
